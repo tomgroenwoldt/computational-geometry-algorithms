@@ -1,20 +1,19 @@
 use crate::{app::App, ui};
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{
-    error::Error,
-    io,
-    time::{Duration, Instant},
-};
+use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
 
-pub fn run(tick_rate: Duration) -> Result<(), Box<dyn Error>> {
+const X_BOUNDS: [f64; 2] = [-200.0, 200.0];
+const Y_BOUNDS: [f64; 2] = [-100.0, 100.0];
+
+pub fn run() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -23,8 +22,8 @@ pub fn run(tick_rate: Duration) -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new("Crossterm Demo");
-    let res = run_app(&mut terminal, app, tick_rate);
+    let app = App::new("Computational geometry algorithms", X_BOUNDS, Y_BOUNDS);
+    let res = run_app(&mut terminal, app);
 
     // restore terminal
     disable_raw_mode()?;
@@ -42,28 +41,12 @@ pub fn run(tick_rate: Duration) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(
-    terminal: &mut Terminal<B>,
-    mut app: App,
-    tick_rate: Duration,
-) -> io::Result<()> {
-    let mut last_tick = Instant::now();
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
-        terminal.draw(|f| ui::draw(f))?;
+        terminal.draw(|f| ui::draw(f, &app))?;
 
-        let timeout = tick_rate
-            .checked_sub(last_tick.elapsed())
-            .unwrap_or_else(|| Duration::from_secs(0));
-        if crossterm::event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                if let KeyCode::Char(c) = key.code {
-                    app.on_key(c)
-                }
-            }
-        }
-        if last_tick.elapsed() >= tick_rate {
-            app.on_tick();
-            last_tick = Instant::now();
+        if let Event::Key(key) = event::read()? {
+            app.on_key(key)
         }
         if app.should_quit {
             return Ok(());
