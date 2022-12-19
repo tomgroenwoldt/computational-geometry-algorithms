@@ -27,36 +27,40 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
         )
         .split(f.size());
     draw_header(f, chunks[0]);
-    draw_line(f, chunks[1], app);
+    draw_algorithm(f, chunks[1], app);
     draw_footer(f, chunks[2], app);
 }
 
-fn draw_line<B>(f: &mut Frame<B>, area: Rect, app: &App)
+pub fn draw_algorithm<B>(f: &mut Frame<B>, area: Rect, app: &App)
 where
     B: Backend,
 {
     let map = Canvas::default()
         .block(Block::default().title("Algorithm").borders(Borders::ALL))
         .paint(|ctx| {
-            if app.points.is_some() {
-                let mut points = app.points.clone().unwrap();
-                let points_backup = points.clone();
-                let upper_points = GrahamScan::scan_upper(&mut points.clone());
-                let lower_points = GrahamScan::scan_lower(&mut points);
-                upper_points
-                    .into_iter()
-                    .tuple_windows()
-                    .for_each(|(from, to)| {
-                        ctx.draw(&Line {
-                            x1: from.x,
-                            x2: to.x,
-                            y1: from.y,
-                            y2: to.y,
-                            color: Color::Blue,
-                        })
-                    });
-                lower_points
-                    .into_iter()
+            let algorithm = &app.algorithm;
+
+            // If there are no points, don't render anything.
+            if algorithm.points.is_empty() {
+                return;
+            }
+
+            // Draw edges calculated by algorithm.
+            algorithm.upper_steps[app.upper_step]
+                .iter()
+                .tuple_windows()
+                .for_each(|(from, to)| {
+                    ctx.draw(&Line {
+                        x1: from.x,
+                        x2: to.x,
+                        y1: from.y,
+                        y2: to.y,
+                        color: Color::Blue,
+                    })
+                });
+            if !algorithm.lower_steps.is_empty() {
+                algorithm.lower_steps[app.lower_step]
+                    .iter()
                     .tuple_windows()
                     .for_each(|(from, to)| {
                         ctx.draw(&Line {
@@ -67,15 +71,19 @@ where
                             color: Color::Green,
                         })
                     });
-                ctx.layer();
-                ctx.draw(&Points {
-                    coords: &points_backup
-                        .iter()
-                        .map(|point| (point.x, point.y))
-                        .collect::<Vec<_>>(),
-                    color: Color::Red,
-                })
             }
+
+            ctx.layer();
+
+            // Draw random generated points.
+            ctx.draw(&Points {
+                coords: &algorithm
+                    .points
+                    .iter()
+                    .map(|point| (point.x, point.y))
+                    .collect::<Vec<_>>(),
+                color: Color::Red,
+            })
         })
         .marker(symbols::Marker::Braille)
         .x_bounds(app.x_bounds)

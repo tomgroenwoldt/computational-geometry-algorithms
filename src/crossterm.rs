@@ -4,7 +4,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{error::Error, io};
+use std::io;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -13,19 +13,19 @@ use tui::{
 const X_BOUNDS: [f64; 2] = [-200.0, 200.0];
 const Y_BOUNDS: [f64; 2] = [-100.0, 100.0];
 
-pub fn run() -> Result<(), Box<dyn Error>> {
-    // setup terminal
+pub fn run() -> Result<(), anyhow::Error> {
+    // Setup terminal.
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // create app and run it
+    // Create app and run it.
     let app = App::new("Computational geometry algorithms", X_BOUNDS, Y_BOUNDS);
     let res = run_app(&mut terminal, app);
 
-    // restore terminal
+    // Restore terminal.
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
@@ -41,12 +41,17 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+fn run_app<B: Backend + std::marker::Send>(
+    terminal: &mut Terminal<B>,
+    mut app: App,
+) -> Result<(), anyhow::Error> {
     loop {
         terminal.draw(|f| ui::draw(f, &app))?;
 
         if let Event::Key(key) = event::read()? {
-            app.on_key(key)
+            if let Err(_e) = app.on_key(key) {
+                // TODO: Add error message functionality for TUI
+            }
         }
         if app.should_quit {
             return Ok(());
