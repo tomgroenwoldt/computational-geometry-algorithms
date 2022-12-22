@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use nalgebra::Point2;
 use tui::{
     backend::Backend,
@@ -14,6 +13,9 @@ use tui::{
 
 use crate::app::App;
 
+/// # Different drawing methods.
+/// Defines how the steps of an algorithm
+/// should be rendered.
 pub enum DrawMethod {
     Edge,
 }
@@ -38,23 +40,8 @@ pub trait Algorithm {
                 let steps = self.get_steps();
 
                 // Draw steps calculated by algorithm.
-                // TODO: Currently steps are drawn as edges. If needed introduce
-                // distinction here.
                 match self.get_draw_method() {
-                    DrawMethod::Edge => {
-                        steps[app.step]
-                            .iter()
-                            .tuple_windows()
-                            .for_each(|(from, to)| {
-                                ctx.draw(&Line {
-                                    x1: from.x,
-                                    x2: to.x,
-                                    y1: from.y,
-                                    y2: to.y,
-                                    color: Color::Blue,
-                                })
-                            })
-                    }
+                    DrawMethod::Edge => steps[app.step].iter().for_each(|line| ctx.draw(line)),
                 }
                 ctx.layer();
 
@@ -77,9 +64,9 @@ pub trait Algorithm {
     fn get_points(&self) -> Vec<Point2<f64>>;
 
     /// Get all computed steps. Every step is stored as a vector of
-    /// points. This is convenient because we can iterate through the algorithm
-    /// after a single computation.
-    fn get_steps(&self) -> Vec<Vec<Point2<f64>>>;
+    /// lines. This is convenient because we can iterate through the algorithm
+    /// steps after a single computation.
+    fn get_steps(&self) -> Vec<Vec<Line>>;
 
     fn get_draw_method(&self) -> DrawMethod;
 }
