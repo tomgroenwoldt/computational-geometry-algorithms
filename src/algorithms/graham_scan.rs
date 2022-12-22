@@ -1,7 +1,11 @@
 use nalgebra::{Point2, Vector2};
 
+use super::algorithm::Algorithm;
+
 pub struct GrahamScan {
     pub step_count: usize,
+    // Later passed to app.
+    pub maximum_step_count: usize,
     pub current_point_amount: usize,
     pub points: Vec<Point2<f64>>,
     pub upper_steps: Vec<Vec<Point2<f64>>>,
@@ -22,6 +26,7 @@ impl GrahamScan {
     pub fn new() -> Self {
         GrahamScan {
             step_count: 0,
+            maximum_step_count: 0,
             current_point_amount: 0,
             points: vec![],
             upper_steps: vec![],
@@ -51,6 +56,7 @@ impl GrahamScan {
                     }
                 }
                 self.step_count += 1;
+                self.maximum_step_count += 1;
             }
             Orientation::Lower => {
                 self.lower_steps.push(vec![]);
@@ -72,6 +78,7 @@ impl GrahamScan {
                     }
                 }
                 self.step_count += 1;
+                self.maximum_step_count += 1;
             }
         }
     }
@@ -97,6 +104,7 @@ impl GrahamScan {
     pub fn calculate(&mut self) {
         self.upper_steps = vec![];
         self.lower_steps = vec![];
+        self.maximum_step_count = 0;
         self.step_count = 0;
         self.current_point_amount = 0;
 
@@ -153,5 +161,15 @@ impl GrahamScan {
                 self.add_step(Step::Deletion, None, Orientation::Lower);
             }
         }
+    }
+}
+
+impl Algorithm for GrahamScan {
+    fn get_points(&self) -> Vec<Point2<f64>> {
+        self.points.clone()
+    }
+
+    fn get_steps(&self) -> Vec<Vec<Point2<f64>>> {
+        [self.upper_steps.clone(), self.lower_steps.clone()].concat()
     }
 }

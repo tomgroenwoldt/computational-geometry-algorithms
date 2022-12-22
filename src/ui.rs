@@ -1,17 +1,14 @@
-use itertools::Itertools;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    symbols,
     text::{Span, Spans, Text},
-    widgets::canvas::{Canvas, Line, Points},
     widgets::{Block, Borders, Paragraph, Wrap},
     Frame,
 };
 
 use crate::{
-    algorithms::graham_scan::GrahamScan,
+    algorithms::algorithm::Algorithm,
     app::{App, InputMode},
 };
 
@@ -27,68 +24,8 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
         )
         .split(f.size());
     draw_header(f, chunks[0]);
-    draw_algorithm(f, chunks[1], app);
+    app.algorithm.draw_algorithm(f, chunks[1], app);
     draw_footer(f, chunks[2], app);
-}
-
-pub fn draw_algorithm<B>(f: &mut Frame<B>, area: Rect, app: &App)
-where
-    B: Backend,
-{
-    let map = Canvas::default()
-        .block(Block::default().title("Algorithm").borders(Borders::ALL))
-        .paint(|ctx| {
-            let algorithm = &app.algorithm;
-
-            // If there are no points, don't render anything.
-            if algorithm.points.is_empty() {
-                return;
-            }
-
-            // Draw edges calculated by algorithm.
-            algorithm.upper_steps[app.upper_step]
-                .iter()
-                .tuple_windows()
-                .for_each(|(from, to)| {
-                    ctx.draw(&Line {
-                        x1: from.x,
-                        x2: to.x,
-                        y1: from.y,
-                        y2: to.y,
-                        color: Color::Blue,
-                    })
-                });
-            if !algorithm.lower_steps.is_empty() {
-                algorithm.lower_steps[app.lower_step]
-                    .iter()
-                    .tuple_windows()
-                    .for_each(|(from, to)| {
-                        ctx.draw(&Line {
-                            x1: from.x,
-                            x2: to.x,
-                            y1: from.y,
-                            y2: to.y,
-                            color: Color::Green,
-                        })
-                    });
-            }
-
-            ctx.layer();
-
-            // Draw random generated points.
-            ctx.draw(&Points {
-                coords: &algorithm
-                    .points
-                    .iter()
-                    .map(|point| (point.x, point.y))
-                    .collect::<Vec<_>>(),
-                color: Color::Red,
-            })
-        })
-        .marker(symbols::Marker::Braille)
-        .x_bounds(app.x_bounds)
-        .y_bounds(app.y_bounds);
-    f.render_widget(map, area);
 }
 
 fn draw_header<B>(f: &mut Frame<B>, area: Rect)
