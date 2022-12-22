@@ -14,6 +14,10 @@ use tui::{
 
 use crate::app::App;
 
+pub enum DrawMethod {
+    Edge,
+}
+
 /// Every algorithm implementing this trait is able
 /// to render within the general ui.
 pub trait Algorithm {
@@ -36,18 +40,22 @@ pub trait Algorithm {
                 // Draw steps calculated by algorithm.
                 // TODO: Currently steps are drawn as edges. If needed introduce
                 // distinction here.
-                steps[app.step]
-                    .iter()
-                    .tuple_windows()
-                    .for_each(|(from, to)| {
-                        ctx.draw(&Line {
-                            x1: from.x,
-                            x2: to.x,
-                            y1: from.y,
-                            y2: to.y,
-                            color: Color::Blue,
-                        })
-                    });
+                match self.get_draw_method() {
+                    DrawMethod::Edge => {
+                        steps[app.step]
+                            .iter()
+                            .tuple_windows()
+                            .for_each(|(from, to)| {
+                                ctx.draw(&Line {
+                                    x1: from.x,
+                                    x2: to.x,
+                                    y1: from.y,
+                                    y2: to.y,
+                                    color: Color::Blue,
+                                })
+                            })
+                    }
+                }
                 ctx.layer();
 
                 // Draw initial points after steps to prevent overdrawing them.
@@ -72,4 +80,6 @@ pub trait Algorithm {
     /// points. This is convenient because we can iterate through the algorithm
     /// after a single computation.
     fn get_steps(&self) -> Vec<Vec<Point2<f64>>>;
+
+    fn get_draw_method(&self) -> DrawMethod;
 }

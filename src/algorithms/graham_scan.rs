@@ -1,6 +1,6 @@
 use nalgebra::{Point2, Vector2};
 
-use super::algorithm::Algorithm;
+use super::algorithm::{Algorithm, DrawMethod};
 
 pub struct GrahamScan {
     pub step_count: usize,
@@ -171,5 +171,9 @@ impl Algorithm for GrahamScan {
 
     fn get_steps(&self) -> Vec<Vec<Point2<f64>>> {
         [self.upper_steps.clone(), self.lower_steps.clone()].concat()
+    }
+
+    fn get_draw_method(&self) -> DrawMethod {
+        DrawMethod::Edge
     }
 }
