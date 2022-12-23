@@ -1,7 +1,13 @@
+use itertools::Itertools;
 use nalgebra::{Point2, Vector2};
+use tui::{style::Color, widgets::canvas::Line};
+
+use super::algorithm::{Algorithm, DrawMethod};
 
 pub struct GrahamScan {
     pub step_count: usize,
+    // Later passed to app.
+    pub maximum_step_count: usize,
     pub current_point_amount: usize,
     pub points: Vec<Point2<f64>>,
     pub upper_steps: Vec<Vec<Point2<f64>>>,
@@ -22,6 +28,7 @@ impl GrahamScan {
     pub fn new() -> Self {
         GrahamScan {
             step_count: 0,
+            maximum_step_count: 0,
             current_point_amount: 0,
             points: vec![],
             upper_steps: vec![],
@@ -51,6 +58,7 @@ impl GrahamScan {
                     }
                 }
                 self.step_count += 1;
+                self.maximum_step_count += 1;
             }
             Orientation::Lower => {
                 self.lower_steps.push(vec![]);
@@ -72,6 +80,7 @@ impl GrahamScan {
                     }
                 }
                 self.step_count += 1;
+                self.maximum_step_count += 1;
             }
         }
     }
@@ -97,6 +106,7 @@ impl GrahamScan {
     pub fn calculate(&mut self) {
         self.upper_steps = vec![];
         self.lower_steps = vec![];
+        self.maximum_step_count = 0;
         self.step_count = 0;
         self.current_point_amount = 0;
 
@@ -153,5 +163,58 @@ impl GrahamScan {
                 self.add_step(Step::Deletion, None, Orientation::Lower);
             }
         }
+    }
+}
+
+impl Algorithm for GrahamScan {
+    fn get_points(&self) -> Vec<Point2<f64>> {
+        self.points.clone()
+    }
+
+    fn get_steps(&self) -> Vec<Vec<Line>> {
+        let upper_lines = self
+            .upper_steps
+            .iter()
+            .map(|upper_step| {
+                upper_step
+                    .iter()
+                    .tuple_windows()
+                    .map(|(from, to)| Line {
+                        x1: from.x,
+                        x2: to.x,
+                        y1: from.y,
+                        y2: to.y,
+                        color: Color::Blue,
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        let lower_lines = self.lower_steps.iter().map(|lower_step| {
+            lower_step
+                .iter()
+                .tuple_windows()
+                .map(|(from, to)| Line {
+                    x1: from.x,
+                    x2: to.x,
+                    y1: from.y,
+                    y2: to.y,
+                    color: Color::Green,
+                })
+                .collect::<Vec<_>>()
+        });
+
+        // Because we want to render the upper lines as well as the low lines
+        // are rendered, we have to concat them in front of the actual lower lines.
+        // This is really unclean and I am not satisfied :(
+        let lower_lines = lower_lines
+            .into_iter()
+            .map(|line| [upper_lines[upper_lines.len() - 1].clone(), line].concat())
+            .collect::<Vec<_>>();
+        [upper_lines, lower_lines].concat()
+    }
+
+    fn get_draw_method(&self) -> DrawMethod {
+        DrawMethod::Edge
     }
 }

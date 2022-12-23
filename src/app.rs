@@ -17,8 +17,8 @@ pub struct App<'a> {
     pub input: String,
 
     pub algorithm: GrahamScan,
-    pub upper_step: usize,
-    pub lower_step: usize,
+    pub step: usize,
+    pub max_steps: Option<usize>,
     pub point_amount: Option<usize>,
 
     pub x_bounds: [f64; 2],
@@ -34,8 +34,8 @@ impl<'a> App<'a> {
             input_mode: InputMode::Normal,
             input: String::new(),
             algorithm: GrahamScan::new(),
-            upper_step: 0,
-            lower_step: 0,
+            step: 0,
+            max_steps: None,
             point_amount: None,
             x_bounds,
             y_bounds,
@@ -64,54 +64,53 @@ impl<'a> App<'a> {
             InputMode::Normal => match key.code {
                 KeyCode::Char('i') => {
                     self.input_mode = InputMode::Editing;
+                    Ok(())
                 }
                 KeyCode::Char('q') => {
                     self.should_quit = true;
+                    Ok(())
                 }
-                _ => {}
+                _ => Ok(()),
             },
             InputMode::Editing => match key.code {
                 KeyCode::Enter => {
-                    self.upper_step = 0;
-                    self.lower_step = 0;
+                    self.step = 0;
                     self.point_amount = Some(self.input.parse::<usize>()?);
                     self.generate_points();
                     self.algorithm.calculate();
+                    self.max_steps = Some(self.algorithm.maximum_step_count);
+                    Ok(())
                 }
                 KeyCode::Char(c) => {
-                    if c.to_digit(10).is_some() {
+                    if c.is_ascii_digit() {
                         self.input.push(c);
                     }
+                    Ok(())
                 }
                 KeyCode::Backspace => {
                     self.input.pop();
+                    Ok(())
                 }
                 KeyCode::Esc => {
                     self.input_mode = InputMode::Normal;
+                    Ok(())
                 }
                 KeyCode::Right => {
-                    if self.upper_step + self.lower_step
-                        < self.algorithm.upper_steps.len() + self.algorithm.lower_steps.len() - 1
-                    {
-                        if self.upper_step < self.algorithm.upper_steps.len() - 1 {
-                            self.upper_step += 1;
-                        } else if self.lower_step < self.algorithm.lower_steps.len() - 1 {
-                            self.lower_step += 1;
+                    if let Some(max_steps) = self.max_steps {
+                        if self.step < max_steps - 1 {
+                            self.step += 1;
                         }
                     }
+                    Ok(())
                 }
                 KeyCode::Left => {
-                    if self.upper_step + self.lower_step > 0 {
-                        if self.lower_step > 0 {
-                            self.lower_step -= 1;
-                        } else {
-                            self.upper_step -= 1;
-                        }
+                    if self.step > 0 {
+                        self.step -= 1;
                     }
+                    Ok(())
                 }
-                _ => {}
+                _ => Ok(()),
             },
         }
-        Ok(())
     }
 }

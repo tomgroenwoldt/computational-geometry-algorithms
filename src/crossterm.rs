@@ -35,7 +35,7 @@ pub fn run() -> Result<(), anyhow::Error> {
     terminal.show_cursor()?;
 
     if let Err(err) = res {
-        println!("{:?}", err)
+        println!("{err}")
     }
 
     Ok(())
