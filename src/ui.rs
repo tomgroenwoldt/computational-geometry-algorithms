@@ -3,7 +3,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Borders, Paragraph, Tabs, Wrap},
     Frame,
 };
 
@@ -16,6 +16,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
     let chunks = Layout::default()
         .constraints(
             [
+                Constraint::Length(3),
                 Constraint::Length(9),
                 Constraint::Min(8),
                 Constraint::Length(5),
@@ -23,9 +24,24 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
             .as_ref(),
         )
         .split(f.size());
-    draw_header(f, chunks[0]);
-    app.algorithm.draw_algorithm(f, chunks[1], app);
-    draw_footer(f, chunks[2], app);
+    let titles = app
+        .tabs
+        .titles
+        .iter()
+        .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Green))))
+        .collect();
+    let tabs = Tabs::new(titles)
+        .block(Block::default().borders(Borders::ALL).title(app.title))
+        .highlight_style(Style::default().fg(Color::Yellow))
+        .select(app.tabs.index);
+    f.render_widget(tabs, chunks[0]);
+    draw_header(f, chunks[1]);
+
+    match app.tabs.index {
+        0 => app.algorithm.draw_algorithm(f, chunks[2], app),
+        _ => {}
+    }
+    draw_footer(f, chunks[3], app);
 }
 
 fn draw_header<B>(f: &mut Frame<B>, area: Rect)

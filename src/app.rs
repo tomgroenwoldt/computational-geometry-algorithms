@@ -10,8 +10,31 @@ pub enum InputMode {
     Editing,
 }
 
+pub struct TabsState<'a> {
+    pub titles: Vec<&'a str>,
+    pub index: usize,
+}
+
+impl<'a> TabsState<'a> {
+    pub fn new(titles: Vec<&'a str>) -> TabsState {
+        TabsState { titles, index: 0 }
+    }
+    pub fn next(&mut self) {
+        self.index = (self.index + 1) % self.titles.len();
+    }
+
+    pub fn previous(&mut self) {
+        if self.index > 0 {
+            self.index -= 1;
+        } else {
+            self.index = self.titles.len() - 1;
+        }
+    }
+}
+
 pub struct App<'a> {
     pub title: &'a str,
+    pub tabs: TabsState<'a>,
 
     pub input_mode: InputMode,
     pub input: String,
@@ -31,6 +54,7 @@ impl<'a> App<'a> {
     pub fn new(title: &'a str, x_bounds: [f64; 2], y_bounds: [f64; 2]) -> App<'a> {
         App {
             title,
+            tabs: TabsState::new(vec!["Graham Scan", "Another algorithm"]),
             input_mode: InputMode::Normal,
             input: String::new(),
             algorithm: GrahamScan::new(),
@@ -60,17 +84,36 @@ impl<'a> App<'a> {
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> Result<(), Error> {
+        match key.code {
+            KeyCode::Right => {
+                if let Some(max_steps) = self.max_steps {
+                    if self.step < max_steps - 1 {
+                        self.step += 1;
+                    }
+                }
+            }
+            KeyCode::Left => {
+                if self.step > 0 {
+                    self.step -= 1;
+                }
+            }
+            KeyCode::Tab => {
+                self.tabs.next();
+            }
+            KeyCode::BackTab => {
+                self.tabs.previous();
+            }
+            _ => {}
+        }
         match self.input_mode {
             InputMode::Normal => match key.code {
                 KeyCode::Char('i') => {
                     self.input_mode = InputMode::Editing;
-                    Ok(())
                 }
                 KeyCode::Char('q') => {
                     self.should_quit = true;
-                    Ok(())
                 }
-                _ => Ok(()),
+                _ => {}
             },
             InputMode::Editing => match key.code {
                 KeyCode::Enter => {
@@ -79,38 +122,21 @@ impl<'a> App<'a> {
                     self.generate_points();
                     self.algorithm.calculate();
                     self.max_steps = Some(self.algorithm.maximum_step_count);
-                    Ok(())
                 }
                 KeyCode::Char(c) => {
                     if c.is_ascii_digit() {
                         self.input.push(c);
                     }
-                    Ok(())
                 }
                 KeyCode::Backspace => {
                     self.input.pop();
-                    Ok(())
                 }
                 KeyCode::Esc => {
                     self.input_mode = InputMode::Normal;
-                    Ok(())
                 }
-                KeyCode::Right => {
-                    if let Some(max_steps) = self.max_steps {
-                        if self.step < max_steps - 1 {
-                            self.step += 1;
-                        }
-                    }
-                    Ok(())
-                }
-                KeyCode::Left => {
-                    if self.step > 0 {
-                        self.step -= 1;
-                    }
-                    Ok(())
-                }
-                _ => Ok(()),
+                _ => {}
             },
-        }
+        };
+        Ok(())
     }
 }
