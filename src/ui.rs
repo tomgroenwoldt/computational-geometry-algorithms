@@ -8,8 +8,8 @@ use tui::{
 };
 
 use crate::{
-    algorithms::algorithm::Algorithm,
-    app::{App, InputMode},
+    algorithms::algorithm::{Algorithm, AlgorithmWrapper},
+    app::{App, InputMode, Tab},
 };
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
@@ -24,24 +24,33 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
             .as_ref(),
         )
         .split(f.size());
+
     let titles = app
+        .tab_state
         .tabs
-        .titles
         .iter()
-        .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Green))))
+        .map(|tab| {
+            let title = match &tab.algorithm {
+                AlgorithmWrapper::GrahamScan(algorithm) => Spans::from(Span::styled(
+                    algorithm.get_title(),
+                    Style::default().fg(Color::Gray),
+                )),
+            };
+            title
+        })
         .collect();
+
     let tabs = Tabs::new(titles)
         .block(Block::default().borders(Borders::ALL).title(app.title))
         .highlight_style(Style::default().fg(Color::Yellow))
-        .select(app.tabs.index);
+        .select(app.tab_state.index);
     f.render_widget(tabs, chunks[0]);
+
     draw_header(f, chunks[1]);
 
-    match app.tabs.index {
-        0 => app.algorithm.draw_algorithm(f, chunks[2], app),
-        _ => {}
-    }
-    draw_footer(f, chunks[3], app);
+    app.get_current_tab().algorithm.draw(f, chunks[2], app);
+
+    draw_footer(f, chunks[3], app, app.get_current_tab());
 }
 
 fn draw_header<B>(f: &mut Frame<B>, area: Rect)
@@ -58,7 +67,7 @@ where
     f.render_widget(paragraph, area);
 }
 
-fn draw_footer<B>(f: &mut Frame<B>, area: Rect, app: &App)
+fn draw_footer<B>(f: &mut Frame<B>, area: Rect, app: &App, _tab: &Tab)
 where
     B: Backend,
 {

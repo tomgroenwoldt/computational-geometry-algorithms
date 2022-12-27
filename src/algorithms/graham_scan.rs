@@ -167,8 +167,16 @@ impl GrahamScan {
 }
 
 impl Algorithm for GrahamScan {
-    fn get_points(&self) -> Vec<Point2<f64>> {
-        self.points.clone()
+    fn get_title(&self) -> &str {
+        "Graham scan"
+    }
+
+    fn get_points(&self) -> &Vec<Point2<f64>> {
+        &self.points
+    }
+
+    fn set_points(&mut self, points: Vec<Point2<f64>>) {
+        self.points = points;
     }
 
     fn get_steps(&self) -> Vec<Vec<Line>> {
