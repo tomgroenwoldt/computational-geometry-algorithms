@@ -33,7 +33,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
             let title = match &tab.algorithm {
                 AlgorithmWrapper::GrahamScan(algorithm) => Spans::from(Span::styled(
                     algorithm.get_title(),
-                    Style::default().fg(Color::Green),
+                    Style::default().fg(Color::Gray),
                 )),
             };
             title
