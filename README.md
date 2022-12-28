@@ -1,6 +1,6 @@
 # Computational geometry algorithms
 
-![graham_scan](https://s3.gifyu.com/images/graham_scan.gif)
+![computation_algorithms_gif](https://s3.gifyu.com/images/readme.gif)
 
 ## Description
 
@@ -34,6 +34,7 @@ Current keybindings:
 
 * `i`: Enter insert mode to edit the point amount.
 * `Enter`: Set typed in point amount.
+* `Tab`: Switch between tabs displayed at the top.
 * `Left` and `Right` arrow keys: Iterate through algorithm steps.
 * `Esc`: Escape insert mode.
 * `q`: Quit program, when **outside insert** mode.
