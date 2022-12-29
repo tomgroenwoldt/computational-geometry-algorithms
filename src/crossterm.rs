@@ -1,4 +1,3 @@
-use crate::{app::App, ui};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
@@ -9,6 +8,8 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
+
+use crate::{app::App, ui::draw::draw};
 
 const X_BOUNDS: [f64; 2] = [-200.0, 200.0];
 const Y_BOUNDS: [f64; 2] = [-100.0, 100.0];
@@ -46,7 +47,7 @@ fn run_app<B: Backend + std::marker::Send>(
     mut app: App,
 ) -> Result<(), anyhow::Error> {
     loop {
-        terminal.draw(|f| ui::draw(f, &app))?;
+        terminal.draw(|f| draw(f, &app))?;
 
         if let Event::Key(key) = event::read()? {
             if let Err(_e) = app.on_key(key) {
