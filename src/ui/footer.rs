@@ -3,71 +3,13 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Gauge, Paragraph, Tabs, Wrap},
+    widgets::{Block, Borders, Gauge, Paragraph},
     Frame,
 };
 
-use crate::{
-    algorithms::algorithm::{Algorithm, AlgorithmWrapper},
-    app::{App, InputMode, Tab},
-};
+use crate::app::{App, InputMode, Tab};
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &App) {
-    let chunks = Layout::default()
-        .constraints(
-            [
-                Constraint::Length(3),
-                Constraint::Length(9),
-                Constraint::Min(8),
-                Constraint::Length(5),
-            ]
-            .as_ref(),
-        )
-        .split(f.size());
-
-    let titles = app
-        .tab_state
-        .tabs
-        .iter()
-        .map(|tab| {
-            let title = match &tab.algorithm {
-                AlgorithmWrapper::GrahamScan(algorithm) => Spans::from(Span::styled(
-                    algorithm.get_title(),
-                    Style::default().fg(Color::Gray),
-                )),
-            };
-            title
-        })
-        .collect();
-
-    let tabs = Tabs::new(titles)
-        .block(Block::default().borders(Borders::ALL).title(app.title))
-        .highlight_style(Style::default().fg(Color::Yellow))
-        .select(app.tab_state.index);
-    f.render_widget(tabs, chunks[0]);
-
-    draw_header(f, chunks[1]);
-
-    app.get_current_tab().algorithm.draw(f, chunks[2], app);
-
-    draw_footer(f, chunks[3], app, app.get_current_tab());
-}
-
-fn draw_header<B>(f: &mut Frame<B>, area: Rect)
-where
-    B: Backend,
-{
-    let text = vec![Spans::from(
-        "This will be the section explaining the graham scan algorithm.",
-    )];
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(Span::styled("Description", Style::default()));
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
-}
-
-fn draw_progress<B>(f: &mut Frame<B>, area: Rect, app: &App)
+pub fn draw_progress<B>(f: &mut Frame<B>, area: Rect, app: &App)
 where
     B: Backend,
 {
@@ -85,7 +27,7 @@ where
     f.render_widget(gauge, area);
 }
 
-fn draw_footer<B>(f: &mut Frame<B>, area: Rect, app: &App, _tab: &Tab)
+pub fn draw<B>(f: &mut Frame<B>, area: Rect, app: &App, _tab: &Tab)
 where
     B: Backend,
 {
