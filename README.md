@@ -1,6 +1,6 @@
 # Computational geometry algorithms
 
-![computation_algorithms_gif](https://s3.gifyu.com/images/readme.gif)
+![computation_algorithms_gif](https://s3.gifyu.com/images/out.gif)
 
 ## Description
 
